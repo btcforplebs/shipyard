@@ -26,3 +26,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts.tenex.json
 .roo/mcp.json
+
+.tenex.json
+bun.lock
+prisma/prisma
+lib/generated

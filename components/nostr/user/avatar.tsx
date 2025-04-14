@@ -4,7 +4,7 @@ import { cx } from "class-variance-authority";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const getInitials = (displayName?: string, pubkey?: string): string => {
-    if (!displayName) return pubkey?.slice(0, 2) || "NU";
+    if (!displayName) return pubkey?.slice(0, 2).toUpperCase() || "U";
 
     const nameParts = displayName.split(" ");
     return nameParts.length > 1 ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase() : displayName[0].toUpperCase();
@@ -26,8 +26,6 @@ export default function UserAvatar({
         default: "h-8 w-8",
         lg: "h-10 w-10",
     };
-
-    const fallbackImage = `https://api.dicebear.com/8.x/identicon/svg?seed=${pubkey}`;
 
     return (
         <Avatar className={cx("rounded-lg", sizeClasses[size], className)}>

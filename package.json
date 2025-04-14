@@ -18,7 +18,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@nostr-dev-kit/ndk": "^2.13.3",
     "@nostr-dev-kit/ndk-cache-dexie": "^2.6.1-rc2",
-    "@nostr-dev-kit/ndk-hooks": "^0.1.8",
+    "@nostr-dev-kit/ndk-hooks": "^0.1.9",
     "@prisma/client": "^6.6.0",
     "@radix-ui/react-accordion": "^1.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.4",

@@ -1,8 +1,7 @@
 "use client";
-
 import * as React from "react";
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { useSessionStore } from "@/stores/session";
+import { useCurrentAccount } from "@/hooks/use-current-account";
 import { useApi } from "@/lib/api";
 
 import { cn } from "@/lib/utils";
@@ -31,6 +30,8 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useNDKCurrentUser, useProfile } from "@nostr-dev-kit/ndk-hooks";
+import UserAvatar from "./nostr/user/avatar";
 
 // Define the API account type
 interface ApiAccount {
@@ -78,20 +79,18 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
     const [showNewAccountDialog, setShowNewAccountDialog] = React.useState(false);
     const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
     const [availableAccounts, setAvailableAccounts] = React.useState<Account[]>(accounts);
-    // Get the current account from the session store
-    const currentAccount = useSessionStore((state) => state.currentAccount);
-    
+    // Get the current account using our custom hook
+    const currentAccount = useCurrentAccount();
+
     // Fetch accounts from the API
-    const { data: apiAccounts, error } = useApi<ApiAccount[]>(
-        currentAccount ? '/api/accounts' : null
-    );
-    
+    const { data: apiAccounts, error } = useApi<ApiAccount[]>(currentAccount ? "/api/accounts" : null);
+
     // Format a pubkey for display (first 6 and last 4 characters)
-    const formatPubkey = (pubkey: string) => {
+    const formatPubkey = React.useCallback((pubkey: string) => {
         if (!pubkey) return "";
         return `${pubkey.substring(0, 6)}...${pubkey.substring(pubkey.length - 4)}`;
-    };
-    
+    }, []);
+
     // Update available accounts when API data changes
     React.useEffect(() => {
         if (apiAccounts && apiAccounts.length > 0) {
@@ -108,9 +107,9 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
                     ),
                 };
             });
-            
+
             setAvailableAccounts(newAccounts);
-            
+
             // Set the first account as selected if we have accounts
             if (newAccounts.length > 0) {
                 setSelectedAccount(newAccounts[0]);
@@ -120,25 +119,30 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
             // Fallback to default accounts if there's an error
             setAvailableAccounts(accounts);
         }
-    }, [apiAccounts, error]);
-    
+    }, [apiAccounts, error, formatPubkey]);
+
+    const currentUser = useNDKCurrentUser();
+
     // Create a custom account object if user is logged in but API hasn't loaded yet
     React.useEffect(() => {
-        if (currentAccount?.pubkey) {
-            const formattedPubkey = formatPubkey(currentAccount.pubkey);
+        if (currentUser?.pubkey) {
+            const formattedPubkey = formatPubkey(currentUser.pubkey);
             const userAccount: Account = {
                 label: `npub: ${formattedPubkey}`,
-                value: currentAccount.pubkey,
+                value: currentUser.pubkey,
                 icon: (
                     <Avatar className="h-6 w-6">
                         <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                        <AvatarFallback>{currentAccount.pubkey.substring(0, 1).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>{currentUser.pubkey.substring(0, 1).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 ),
             };
             setSelectedAccount(userAccount);
         }
-    }, [currentAccount]);
+    }, [currentUser, formatPubkey]);
+
+    const currentAccountProfile = useProfile(currentAccount?.pubkey);
+    const currentUserProfile = useProfile(currentUser?.pubkey);
 
     return (
         <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
@@ -151,8 +155,8 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
                         aria-label="Select an account"
                         className={cn("w-[200px] justify-between", className)}
                     >
-                        {selectedAccount.icon}
-                        <span className="ml-2">{selectedAccount.label}</span>
+                        <UserAvatar pubkey={selectedAccount.value} size="sm" />
+                        <span className="ml-2">{currentAccountProfile?.displayName}</span>
                         <CaretSortIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
@@ -163,43 +167,43 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
                             <CommandEmpty>No account found.</CommandEmpty>
                             <CommandGroup heading="Accounts">
                                 {/* Show current user account if logged in */}
-                                {currentAccount?.pubkey && (
+                                {currentUserProfile?.pubkey && (
                                     <CommandItem
-                                        key={currentAccount.pubkey}
+                                        key={currentUserProfile.pubkey}
                                         onSelect={() => {
                                             setOpen(false);
                                         }}
                                         className="text-sm"
                                     >
-                                        <Avatar className="h-6 w-6">
-                                            <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                                            <AvatarFallback>{currentAccount.pubkey.substring(0, 1).toUpperCase()}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="ml-2">npub: {formatPubkey(currentAccount.pubkey)}</span>
+                                        <UserAvatar pubkey={currentUser?.pubkey} size="sm" />
+                                        <span className="ml-2">{currentUserProfile?.displayName}</span>
                                         <CheckIcon className="ml-auto h-4 w-4 opacity-100" />
                                     </CommandItem>
                                 )}
-                                
+
                                 {/* Show default accounts if not logged in */}
-                                {!currentAccount?.pubkey && accounts.map((account) => (
-                                    <CommandItem
-                                        key={account.value}
-                                        onSelect={() => {
-                                            setSelectedAccount(account);
-                                            setOpen(false);
-                                        }}
-                                        className="text-sm"
-                                    >
-                                        {account.icon}
-                                        <span className="ml-2">{account.label}</span>
-                                        <CheckIcon
-                                            className={cn(
-                                                "ml-auto h-4 w-4",
-                                                selectedAccount.value === account.value ? "opacity-100" : "opacity-0",
-                                            )}
-                                        />
-                                    </CommandItem>
-                                ))}
+                                {!currentAccount?.pubkey &&
+                                    accounts.map((account) => (
+                                        <CommandItem
+                                            key={account.value}
+                                            onSelect={() => {
+                                                setSelectedAccount(account);
+                                                setOpen(false);
+                                            }}
+                                            className="text-sm"
+                                        >
+                                            {account.icon}
+                                            <span className="ml-2">{account.label}</span>
+                                            <CheckIcon
+                                                className={cn(
+                                                    "ml-auto h-4 w-4",
+                                                    selectedAccount.value === account.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0",
+                                                )}
+                                            />
+                                        </CommandItem>
+                                    ))}
                             </CommandGroup>
                         </CommandList>
                         <CommandSeparator />

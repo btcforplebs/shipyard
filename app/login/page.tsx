@@ -50,11 +50,7 @@ export default function LoginPage() {
                                 <p className="text-sm text-muted-foreground">
                                     Connect using your Nostr browser extension
                                 </p>
-                                <Button
-                                    className="w-full"
-                                    onClick={handleExtensionLogin}
-                                    disabled={isLoading}
-                                >
+                                <Button className="w-full" onClick={handleExtensionLogin} disabled={isLoading}>
                                     {isLoading ? "Connecting..." : "Login with Browser Extension"}
                                 </Button>
                             </div>
@@ -118,13 +114,13 @@ export default function LoginPage() {
 
             // Create a NIP-07 signer
             const signer = new NDKNip07Signer();
-            
+
             // Connect NDK with the signer
             ndk.signer = signer;
-            
+
             // Get the user's public key
             const pubkey = await signer.user();
-            
+
             if (!pubkey?.pubkey) {
                 toast.error("Failed to get public key from extension");
                 return;
@@ -132,7 +128,7 @@ export default function LoginPage() {
 
             // Create a NIP-98 AUTH event
             const event = await createNIP98AuthEvent(signer, "/api/auth/login", "POST");
-            
+
             if (!event) {
                 toast.error("Failed to create authentication event");
                 return;
@@ -140,26 +136,25 @@ export default function LoginPage() {
 
             // Send the event to the backend using our API utility
             const data = await apiPost("/api/auth/login", {
-                event: event.rawEvent()
+                event: event.rawEvent(),
             });
 
-            
             // Store the JWT token in localStorage for API requests
             localStorage.setItem("auth_token", data.token);
-            
+
             // Store the JWT token in a cookie for the middleware
             document.cookie = `auth_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
-            
+
             // Add the session to NDK
             await sessions.addSession(signer);
-            
+
             // Update the session store
             setCurrentAccount({ pubkey: pubkey.pubkey });
-            
+
             // Format pubkey for display
             const formattedPubkey = `${pubkey.pubkey.substring(0, 6)}...${pubkey.pubkey.substring(pubkey.pubkey.length - 4)}`;
             toast.success(`Login successful! Logged in as npub: ${formattedPubkey}`);
-            
+
             // Redirect to dashboard
             router.push("/dashboard");
         } catch (error) {
@@ -173,15 +168,11 @@ export default function LoginPage() {
     /**
      * Creates a NIP-98 AUTH event for authentication
      */
-    async function createNIP98AuthEvent(
-        signer: NDKNip07Signer,
-        url: string,
-        method: string
-    ) {
+    async function createNIP98AuthEvent(signer: NDKNip07Signer, url: string, method: string) {
         try {
             // Create a new event directly
             const event = new NDKEvent(ndk);
-            
+
             // Set event properties
             event.kind = 27235; // NIP-98 AUTH event kind
             event.content = ""; // Content can be empty for AUTH events
@@ -193,7 +184,7 @@ export default function LoginPage() {
 
             // Sign the event
             await event.sign(signer);
-            
+
             return event;
         } catch (error) {
             console.error("Error creating NIP-98 event:", error);

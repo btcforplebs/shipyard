@@ -30,5 +30,5 @@ export default function RootLayout({
     );
 }
 
-import "./globals.css";import { NDKProvider } from "@/components/providers/ndk";
-
+import "./globals.css";
+import { NDKProvider } from "@/components/providers/ndk";
