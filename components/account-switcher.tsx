@@ -77,7 +77,7 @@ interface AccountSwitcherProps extends PopoverTriggerProps {}
 export function AccountSwitcher({ className }: AccountSwitcherProps) {
     const [open, setOpen] = React.useState(false);
     const [showNewAccountDialog, setShowNewAccountDialog] = React.useState(false);
-    const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
+    const [selectedAccount, setSelectedAccount] = React.useState<Account | null>(null);
     const [availableAccounts, setAvailableAccounts] = React.useState<Account[]>(accounts);
     // Get the current account using our custom hook
     const currentAccount = useCurrentAccount();
@@ -141,8 +141,10 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
         }
     }, [currentUser, formatPubkey]);
 
-    const currentAccountProfile = useProfile(currentAccount?.pubkey);
+    const currentAccountProfile = useProfile(currentAccount);
     const currentUserProfile = useProfile(currentUser?.pubkey);
+
+    if (!selectedAccount) return null;
 
     return (
         <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>

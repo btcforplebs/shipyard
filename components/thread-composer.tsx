@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, X, ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useProfile } from "@nostr-dev-kit/ndk-hooks";
+import { useCurrentAccount } from "@/hooks/use-current-account";
+import UserAvatar from "./nostr/user/avatar";
 
 interface QuotedPost {
     id: string;
@@ -46,15 +49,16 @@ const Tweet = ({
             textareaRef.current.style.height = "auto";
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
-    }, [content]);
+    }, []);
+
+    const currentAccount = useCurrentAccount();
+
+    if (!currentAccount) return null;
 
     return (
         <div className="flex gap-4">
             <div className="flex flex-col items-center">
-                <Avatar className="h-10 w-10">
-                    <AvatarImage src="/placeholder-user.jpg" alt="User" />
-                    <AvatarFallback>U</AvatarFallback>
-                </Avatar>
+                <UserAvatar pubkey={currentAccount} size="lg" />
             </div>
             <div className="flex-1 relative">
                 <Textarea
@@ -106,7 +110,7 @@ const Tweet = ({
                     </Card>
                 )}
 
-                <div className="mt-2 text-xs text-muted-foreground">{content.length}/280 characters</div>
+                <div className="mt-2 text-xs text-muted-foreground">{content.length}/280</div>
             </div>
         </div>
     );
@@ -114,11 +118,15 @@ const Tweet = ({
 
 interface ThreadComposerProps {
     initialQuote?: QuotedPost | null;
+    onChange?: (tweets: { id: string; content: string }[]) => void;
 }
-
-export function ThreadComposer({ initialQuote = null }: ThreadComposerProps) {
+export function ThreadComposer({ initialQuote = null, onChange }: ThreadComposerProps) {
     const [tweets, setTweets] = useState<{ id: string; content: string }[]>([{ id: "1", content: "" }]);
     const [quotedPost, setQuotedPost] = useState<QuotedPost | null>(initialQuote);
+    useEffect(() => {
+        if (onChange) onChange(tweets);
+    }, [tweets, onChange]);
+
     const [focusedTweetId, setFocusedTweetId] = useState("1");
 
     const handleTweetChange = (id: string, content: string) => {
@@ -163,7 +171,7 @@ export function ThreadComposer({ initialQuote = null }: ThreadComposerProps) {
                             <motion.div
                                 initial={{ height: 0 }}
                                 animate={{ height: "100%" }}
-                                className="absolute left-5 top-12 w-0.5 bg-border"
+                                className="absolute left-5 top-10 w-0.5 bg-border"
                                 style={{ bottom: "-12px" }}
                             />
                         )}

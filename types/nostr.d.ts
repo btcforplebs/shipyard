@@ -42,3 +42,19 @@ interface Window {
     getRelays?(): Promise<Record<string, { read: boolean; write: boolean }>>;
   };
 }
+
+/**
+ * API-facing Post type (matches backend response, not DB model)
+ */
+export interface Post {
+  id: string;
+  accountPubkey: string;
+  authorPubkey: string;
+  kind: number;
+  rawEvents: object[];
+  originalPostNostrId?: string | null;
+  isDraft: boolean;
+  nostrEventId?: string | null;
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}

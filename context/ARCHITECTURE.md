@@ -75,6 +75,39 @@ Where `Hexpubkey` is imported from `@nostr-dev-kit/ndk`.
 
 This type is used to represent a Nostr account in the application. It currently only contains the public key, but can be extended in the future to include additional account information.
 
+## ContentCard Thread Rendering
+
+As of 2025-04-15, the `ContentCard` component in `components/content-card.tsx` supports rendering Nostr threads:
+
+- If a post's `rawEvents` array contains more than one event, the card renders all events as a tweet thread (vertical stack), visually resembling a Twitter/X thread.
+- Each event in the thread is rendered as a sub-card (with avatar, display name, handle, and content).
+- The main card actions (edit, repost, etc.) are only shown on the first tweet in the thread to avoid UI clutter.
+- If there is only one event, the card renders as a single tweet (as before).
+- The thread rendering logic is modular, using `Tweet` and `TweetThread` subcomponents within `ContentCard`.
+- This supports the multi-event post model described in the database architecture section, and ensures the UI accurately reflects the structure of multi-part Nostr posts.
+
+## Dashboard Page: Client Component and Account Flow
+
+As of 2025-04-14, the dashboard page (`app/dashboard/page.tsx`) is implemented as a **client component** (with `"use client"` at the top). This is required because it uses the `useCurrentAccount` hook, which is client-only and depends on Zustand state and NDK hooks.
+
+**Account Pubkey Flow:**
+- The dashboard page calls `useCurrentAccount()` to get the current account's pubkey (or null if not available).
+- The `DashboardContentQueue` component expects a `string` pubkey prop. To ensure type safety, the dashboard page only renders `DashboardContentQueue` if the pubkey is available, otherwise it shows a loading message.
+- This prevents server/client boundary errors and TypeScript type errors.
+
+**Relevant code pattern:**
+```tsx
+const accountPubkey = useCurrentAccount();
+
+{accountPubkey ? (
+  <DashboardContentQueue accountPubkey={accountPubkey} />
+) : (
+  <div className="text-center py-8 text-muted-foreground">Loading account...</div>
+)}
+```
+
+This pattern should be followed for any client component that depends on Zustand/NDK state.
+
 ## Database Architecture
 
 The project uses SQLite as the database with Prisma ORM for database access and migrations. This provides a robust persistence layer for storing user data, content drafts, schedules, and other application data.
@@ -102,6 +135,13 @@ The database schema includes the following main models:
 3. **Setting**: Account-level settings like default relays
 4. **AccountUser**: Join table for accounts and users (collaborators)
 5. **Post**: Represents Nostr events (notes, articles, etc.)
+   
+#### Post Model: Multi-Event Support
+
+- The `Post` model now supports storing and publishing multiple Nostr events per post.
+- The `rawEvents` field (type: String, mapped as `raw_events`) contains a JSON-serialized array of raw Nostr event objects.
+- All post creation, update, and retrieval logic has been updated to handle arrays of events, enabling batch publishing and multi-part content.
+
 6. **Queue**: Organizes content within an account
 7. **Schedule**: Associates posts with queues and defines when they should be published
 8. **Subscription**: Tracks the subscription status of accounts
@@ -173,6 +213,32 @@ The application exposes several API endpoints for client-server communication.
 
 - **GET /api/queues**: (Placeholder - To be implemented)
 - **POST /api/queues**: (Placeholder - To be implemented)
+
+### Posts
+
+- **POST /api/posts**: Create a new post (accepts `account_pubkey` and an array of `rawEvents[]` representing tweets or threads).
+- **POST /api/posts/[post-id]/schedule**: Schedule or update the publishing of a post (e.g., set `isDraft: false` and store schedule info).
+- **GET /api/posts?account_pubkey=...**: Returns all posts for the specified account.
+
+#### Post Creation & Scheduling Flow
+
+1. **Frontend (Composer Short)**
+   - User composes a tweet or thread using the ThreadComposer component.
+   - On scheduling, the frontend sends a POST to `/api/posts` with the account pubkey and the array of raw events.
+   - After creation, the frontend calls POST `/api/posts/<post-id>/schedule` to schedule the post.
+   - On success, the user is redirected to the dashboard.
+
+2. **Backend**
+   - The `/api/posts` endpoint creates a new post in the database, storing the array of raw Nostr events.
+   - The `/api/posts/[post-id]/schedule` endpoint updates the post (e.g., sets `isDraft: false`).
+   - The `/api/posts` GET endpoint returns all scheduled posts for the account.
+
+3. **Dashboard Integration**
+   - The dashboard fetches posts for the current account using GET `/api/posts?account_pubkey=...`.
+   - Posts are displayed in the Content Queue via the QueueList component, which now accepts real post data as a prop.
+
+4. **Testing**
+   - Comprehensive tests exist for all new API endpoints, covering creation, scheduling, and fetching of posts.
 
 ## Authentication Flow
 
@@ -278,6 +344,10 @@ export async function GET(request: Request) {
 4. **Verify authorization for resource access**. After obtaining the authenticated pubkey, verify that the user has permission to access the requested resource (e.g., check if they own the account or are a collaborator).
 
 5. **Keep sensitive operations server-side**. Use the authenticated pubkey to perform operations on the server rather than sending sensitive data to the client.
+
+6. **Use the shared API utility for authenticated client requests.**
+   All client components that make authenticated API calls should use the shared utility functions in `lib/api.ts` (such as `apiPost`, `apiPut`, `apiDelete`). These utilities automatically include the JWT from localStorage in the `Authorization` header, ensuring consistent authentication and reducing duplication.
+   For example, the compose page (`app/compose/short/page.tsx`) uses `apiPost` for all backend calls that require authentication.
 
 ### Security Considerations
 

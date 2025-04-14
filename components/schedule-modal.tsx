@@ -24,14 +24,18 @@ interface ScheduleModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     isPremium?: boolean;
+    onSchedule?: (scheduleData: { date?: Date; scheduleType: string }) => Promise<void> | void;
 }
 
-export function ScheduleModal({ open, onOpenChange, isPremium = false }: ScheduleModalProps) {
+export function ScheduleModal({ open, onOpenChange, isPremium = false, onSchedule }: ScheduleModalProps) {
     const [scheduleType, setScheduleType] = useState<"time" | "trigger">("time");
     const [date, setDate] = useState<Date | undefined>(new Date());
     const { toast } = useToast();
 
-    const handleSchedule = () => {
+    const handleSchedule = async () => {
+        if (onSchedule) {
+            await onSchedule({ date, scheduleType });
+        }
         toast({
             title: "Content scheduled",
             description: "Your content has been scheduled successfully.",

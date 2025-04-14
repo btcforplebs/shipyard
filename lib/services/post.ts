@@ -12,20 +12,20 @@ export const PostService = {
         accountPubkey: string;
         authorPubkey: string;
         kind: number;
-        rawEvent: object;
+        rawEvents: object[];
         originalPostNostrId?: string;
         isDraft?: boolean;
         nostrEventId?: string;
     }): Promise<Post> {
-        // Convert rawEvent object to JSON string for SQLite storage
-        const rawEventJson = JSON.stringify(data.rawEvent);
+        // Convert rawEvents array to JSON string for SQLite storage
+        const rawEventsJson = JSON.stringify(data.rawEvents);
 
         return prisma.post.create({
             data: {
                 accountPubkey: data.accountPubkey,
                 authorPubkey: data.authorPubkey,
                 kind: data.kind,
-                rawEvent: rawEventJson,
+                rawEvents: rawEventsJson,
                 originalPostNostrId: data.originalPostNostrId,
                 isDraft: data.isDraft ?? true,
                 nostrEventId: data.nostrEventId,
@@ -44,10 +44,10 @@ export const PostService = {
         });
 
         if (post) {
-            // Parse the rawEvent JSON string back to an object
+            // Parse the rawEvents JSON string back to an array
             return {
                 ...post,
-                rawEvent: JSON.parse(post.rawEvent),
+                rawEvents: JSON.parse(post.rawEvents),
             } as unknown as Post;
         }
 
@@ -65,10 +65,10 @@ export const PostService = {
         });
 
         if (post) {
-            // Parse the rawEvent JSON string back to an object
+            // Parse the rawEvents JSON string back to an array
             return {
                 ...post,
-                rawEvent: JSON.parse(post.rawEvent),
+                rawEvents: JSON.parse(post.rawEvents),
             } as unknown as Post;
         }
 
@@ -81,15 +81,15 @@ export const PostService = {
     async update(
         id: string,
         data: {
-            rawEvent?: object;
+            rawEvents?: object[];
             isDraft?: boolean;
             nostrEventId?: string;
         },
     ): Promise<Post> {
         const updateData: any = {};
 
-        if (data.rawEvent) {
-            updateData.rawEvent = JSON.stringify(data.rawEvent);
+        if (data.rawEvents) {
+            updateData.rawEvents = JSON.stringify(data.rawEvents);
         }
 
         if (data.isDraft !== undefined) {
@@ -107,10 +107,10 @@ export const PostService = {
             data: updateData,
         });
 
-        // Parse the rawEvent JSON string back to an object
+        // Parse the rawEvents JSON string back to an array
         return {
             ...post,
-            rawEvent: JSON.parse(post.rawEvent),
+            rawEvents: JSON.parse(post.rawEvents),
         } as unknown as Post;
     },
 
@@ -153,10 +153,10 @@ export const PostService = {
             },
         });
 
-        // Parse the rawEvent JSON string back to an object for each post
+        // Parse the rawEvents JSON string back to an array for each post
         return posts.map((post) => ({
             ...post,
-            rawEvent: JSON.parse(post.rawEvent),
+            rawEvents: JSON.parse(post.rawEvents),
         })) as unknown as Post[];
     },
 
@@ -188,10 +188,10 @@ export const PostService = {
             },
         });
 
-        // Parse the rawEvent JSON string back to an object for each post
+        // Parse the rawEvents JSON string back to an array for each post
         return posts.map((post) => ({
             ...post,
-            rawEvent: JSON.parse(post.rawEvent),
+            rawEvents: JSON.parse(post.rawEvents),
         })) as unknown as Post[];
     },
 };

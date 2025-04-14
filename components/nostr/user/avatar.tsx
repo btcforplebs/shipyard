@@ -1,3 +1,5 @@
+'use client';
+
 import { Hexpubkey } from "@nostr-dev-kit/ndk";
 import { useProfile } from "@nostr-dev-kit/ndk-hooks";
 import { cx } from "class-variance-authority";

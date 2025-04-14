@@ -1,10 +1,17 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, ListIcon } from "lucide-react";
-import { QueueList } from "@/components/queue-list";
 import { QueueCalendar } from "@/components/queue-calendar";
 
+import { DashboardContentQueue } from "./content-queue";
+import { useCurrentAccount } from "@/hooks/use-current-account";
+
 export default function Dashboard() {
+    // Replace with actual account pubkey from session/user context
+    const accountPubkey = useCurrentAccount();
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -17,8 +24,8 @@ export default function Dashboard() {
                         <CardTitle className="text-sm font-medium">Scheduled Posts</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">12</div>
-                        <p className="text-xs text-muted-foreground">3 posts scheduled for today</p>
+                        <div className="text-2xl font-bold">—</div>
+                        <p className="text-xs text-muted-foreground">Posts scheduled for today</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -64,7 +71,11 @@ export default function Dashboard() {
                 </div>
                 <TabsContent value="list" className="mt-4">
                     <div className="max-w-xl mx-auto">
-                        <QueueList />
+                        {accountPubkey ? (
+                            <DashboardContentQueue accountPubkey={accountPubkey} />
+                        ) : (
+                            <div className="text-center py-8 text-muted-foreground">Loading account...</div>
+                        )}
                     </div>
                 </TabsContent>
                 <TabsContent value="calendar" className="mt-4">

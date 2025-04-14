@@ -87,7 +87,7 @@ model Post {
   accountPubkey      String   @map("account_pubkey")
   authorPubkey       String   @map("author_pubkey")
   kind               Int
-  rawEvent           String   @map("raw_event") // JSON stored as string
+  rawEvents          String   @map("raw_events") // JSON array of raw Nostr events, stored as string
   originalPostNostrId String?  @map("original_post_nostr_id")
   isDraft            Boolean  @default(true) @map("is_draft")
   nostrEventId       String?  @unique @map("nostr_event_id")

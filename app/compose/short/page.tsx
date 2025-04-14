@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiPost } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
@@ -9,10 +10,15 @@ import { ThreadComposer } from "@/components/thread-composer";
 import { ScheduleModal } from "@/components/schedule-modal";
 import { useSearchParams } from "next/navigation";
 
+import { useRouter } from "next/navigation";
+import { useCurrentAccount } from "@/hooks/use-current-account";
+
 export default function ShortFormComposePage() {
     const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [thread, setThread] = useState<{ id: string; content: string }[]>([]);
     const { toast } = useToast();
     const searchParams = useSearchParams();
+    const router = useRouter();
     const quoteId = searchParams.get("quote");
 
     // Mock quoted post data - in a real app, you would fetch this based on the ID
@@ -34,6 +40,35 @@ export default function ShortFormComposePage() {
             title: "Draft saved",
             description: "Your content has been saved as a draft.",
         });
+    };
+
+    // Replace with actual account pubkey from session/user context
+    const accountPubkey = useCurrentAccount();
+
+    const handleSchedulePost = async () => {
+        try {
+            const rawEvents = thread.filter(t => t.content.trim().length > 0).map(t => ({
+                content: t.content,
+                // Add more fields as needed for a rawEvent
+            }));
+            if (rawEvents.length === 0) {
+                toast({ title: "Cannot schedule", description: "Thread is empty." });
+                return;
+            }
+            // 1. Create post
+            const { post } = await apiPost("/api/posts", {
+                account_pubkey: accountPubkey,
+                rawEvents,
+            });
+
+            // 2. Schedule post
+            await apiPost(`/api/posts/${post.id}/schedule`, {});
+
+            // 3. Redirect to dashboard
+            router.push("/dashboard");
+        } catch (err) {
+            toast({ title: "Error", description: String(err) });
+        }
     };
 
     return (
@@ -59,10 +94,14 @@ export default function ShortFormComposePage() {
             </div>
 
             <div className="mt-6">
-                <ThreadComposer initialQuote={quotedPost} />
+                <ThreadComposer initialQuote={quotedPost} onChange={setThread} />
             </div>
-
-            <ScheduleModal open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen} />
+    
+            <ScheduleModal
+                open={isScheduleModalOpen}
+                onOpenChange={setIsScheduleModalOpen}
+                onSchedule={handleSchedulePost}
+            />
         </div>
     );
 }
