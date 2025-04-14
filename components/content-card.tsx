@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { apiDelete } from "@/lib/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -58,6 +61,9 @@ export function ContentCard(post: Post) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isRepostModalOpen, setIsRepostModalOpen] = useState(false);
     const [repostType, setRepostType] = useState<"repost" | "quote">("repost");
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const { toast } = useToast();
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -122,7 +128,12 @@ export function ContentCard(post: Post) {
                                                     <DropdownMenuItem onClick={() => console.log("Reschedule")}>
                                                         Reschedule
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        className="text-destructive"
+                                                        onClick={() => setShowDeleteDialog(true)}
+                                                    >
+                                                        Delete
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
@@ -197,6 +208,45 @@ export function ContentCard(post: Post) {
                     postId={id}
                     postType={repostType}
                 />
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete scheduled post?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. Are you sure you want to delete this scheduled post?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground"
+                            disabled={isDeleting}
+                            onClick={async () => {
+                                setIsDeleting(true);
+                                try {
+                                    await apiDelete(`/api/posts/${id}`);
+                                    setShowDeleteDialog(false);
+                                    toast({
+                                        title: "Post deleted",
+                                        description: "The scheduled post was deleted successfully.",
+                                    });
+                                    router.refresh();
+                                } catch (err: any) {
+                                    toast({
+                                        title: "Failed to delete post",
+                                        description: err?.info?.error || "An error occurred.",
+                                        variant: "destructive",
+                                    });
+                                } finally {
+                                    setIsDeleting(false);
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
             </>
         );
     }
@@ -236,7 +286,12 @@ export function ContentCard(post: Post) {
                                     <DropdownMenuItem onClick={() => console.log("Reschedule")}>
                                         Reschedule
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        className="text-destructive"
+                                        onClick={() => setShowDeleteDialog(true)}
+                                    >
+                                        Delete
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
@@ -282,6 +337,45 @@ export function ContentCard(post: Post) {
                 postId={id}
                 postType={repostType}
             />
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete scheduled post?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. Are you sure you want to delete this scheduled post?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground"
+                        disabled={isDeleting}
+                        onClick={async () => {
+                            setIsDeleting(true);
+                            try {
+                                await apiDelete(`/api/posts/${id}`);
+                                setShowDeleteDialog(false);
+                                toast({
+                                    title: "Post deleted",
+                                    description: "The scheduled post was deleted successfully.",
+                                });
+                                router.refresh();
+                            } catch (err: any) {
+                                toast({
+                                    title: "Failed to delete post",
+                                    description: err?.info?.error || "An error occurred.",
+                                    variant: "destructive",
+                                });
+                            } finally {
+                                setIsDeleting(false);
+                            }
+                        }}
+                    >
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
         </>
     );
 }

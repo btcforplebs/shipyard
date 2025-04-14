@@ -108,6 +108,27 @@ const accountPubkey = useCurrentAccount();
 
 This pattern should be followed for any client component that depends on Zustand/NDK state.
 
+## Homepage: Conditional Login/Dashboard Button
+
+As of 2025-04-15, the homepage (`app/page.tsx`) is implemented as a **client component** (with `"use client"` at the top) to support session-aware UI. The page uses the `useCurrentAccount` hook to determine if a user is logged in:
+
+- If the user is logged in (`useCurrentAccount()` returns a pubkey), the header and main call-to-action button display a link to the dashboard (`/dashboard`).
+- If the user is not logged in, these elements display a link to the login page (`/login`).
+
+**Relevant code pattern:**
+```tsx
+const currentAccount = useCurrentAccount();
+const isLoggedIn = !!currentAccount;
+
+{isLoggedIn ? (
+  <Link href="/dashboard"><Button>Dashboard</Button></Link>
+) : (
+  <Link href="/login"><Button>Login</Button></Link>
+)}
+```
+
+This ensures a seamless user experience and consistent session handling across the homepage and dashboard.
+
 ## Database Architecture
 
 The project uses SQLite as the database with Prisma ORM for database access and migrations. This provides a robust persistence layer for storing user data, content drafts, schedules, and other application data.
@@ -219,6 +240,7 @@ The application exposes several API endpoints for client-server communication.
 - **POST /api/posts**: Create a new post (accepts `account_pubkey` and an array of `rawEvents[]` representing tweets or threads).
 - **POST /api/posts/[post-id]/schedule**: Schedule or update the publishing of a post (e.g., set `isDraft: false` and store schedule info).
 - **GET /api/posts?account_pubkey=...**: Returns all posts for the specified account.
+- **DELETE /api/posts/[post-id]**: Delete a post by ID (requires authentication; only the post owner can delete).
 
 #### Post Creation & Scheduling Flow
 
@@ -239,6 +261,7 @@ The application exposes several API endpoints for client-server communication.
 
 4. **Testing**
    - Comprehensive tests exist for all new API endpoints, covering creation, scheduling, and fetching of posts.
+    - The `/api/posts/[post-id]` DELETE endpoint allows authenticated users to delete their own posts. The endpoint checks that the authenticated pubkey matches the post's `accountPubkey` or `authorPubkey` before deletion.
 
 ## Authentication Flow
 

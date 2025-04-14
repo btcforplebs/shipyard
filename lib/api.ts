@@ -172,5 +172,10 @@ export async function apiDelete(url: string) {
         throw error;
     }
 
+    // If 204 No Content, return null (don't try to parse JSON)
+    if (response.status === 204) {
+        return null;
+    }
+
     return response.json();
 }

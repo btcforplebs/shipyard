@@ -39,14 +39,6 @@ export function Sidebar() {
 
     return (
         <div className="fixed top-16 left-0 flex h-[calc(100vh-4rem)] w-64 flex-col border-r bg-background">
-            <div className="p-6">
-                <Link href="/dashboard">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xl font-bold">Shipyard</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">A Quiet Space for Loud Ideas</span>
-                </Link>
-            </div>
             <div className="flex-1 overflow-auto py-2">
                 <nav className="grid items-start px-4 text-sm font-medium">
                     {routes.map((route) => (

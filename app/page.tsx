@@ -1,8 +1,14 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useCurrentAccount } from "@/hooks/use-current-account";
 
 export default function Home() {
+    const currentAccount = useCurrentAccount();
+    const isLoggedIn = !!currentAccount;
+
     return (
         <div className="flex min-h-screen flex-col">
             <header className="border-b">
@@ -11,9 +17,15 @@ export default function Home() {
                         <span className="text-xl font-bold">Shipyard</span>
                     </div>
                     <nav className="flex items-center gap-4">
-                        <Link href="/login">
-                            <Button>Login</Button>
-                        </Link>
+                        {isLoggedIn ? (
+                            <Link href="/dashboard">
+                                <Button>Dashboard</Button>
+                            </Link>
+                        ) : (
+                            <Link href="/login">
+                                <Button>Login</Button>
+                            </Link>
+                        )}
                     </nav>
                 </div>
             </header>
@@ -27,11 +39,19 @@ export default function Home() {
                             Focused Writing for Nostr
                         </p>
                         <div className="flex justify-center gap-4">
-                            <Link href="/login">
-                                <Button size="lg" className="gap-2">
-                                    Start Writing <ArrowRight className="h-4 w-4" />
-                                </Button>
-                            </Link>
+                            {isLoggedIn ? (
+                                <Link href="/dashboard">
+                                    <Button size="lg" className="gap-2">
+                                        Go to Dashboard <ArrowRight className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            ) : (
+                                <Link href="/login">
+                                    <Button size="lg" className="gap-2">
+                                        Start Writing <ArrowRight className="h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            )}
                             <Link href="/features">
                                 <Button size="lg" variant="outline">
                                     Learn More
