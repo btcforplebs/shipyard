@@ -12,6 +12,8 @@ const publicPaths = [
 
 // Check if the path is public
 function isPublicPath(path: string) {
+  if (path.startsWith('/api') && !path.startsWith('/api/auth/login')) return false;
+  
   return publicPaths.some(publicPath => path.startsWith(publicPath));
 }
 
@@ -49,10 +51,29 @@ export async function middleware(request: NextRequest) {
       );
     }
     
-    // JWT is valid, let the request proceed.
-    // API routes will handle extracting the pubkey from the token.
+    // JWT is valid, inject the pubkey into a custom request header
+    if (verificationResult.pubkey) {
+      // Create a new headers object from the original request
+      const requestHeaders = new Headers(request.headers);
+      // Add the pubkey as a custom header
+      requestHeaders.set('x-auth-pubkey', verificationResult.pubkey);
+      
+      // Create a new request with the modified headers
+      const newRequest = new Request(request.url, {
+        method: request.method,
+        headers: requestHeaders,
+        body: request.body,
+        redirect: request.redirect,
+        signal: request.signal,
+      });
+      
+      // Continue with the modified request
+      return NextResponse.next({
+        request: newRequest,
+      });
+    }
     
-    // Continue with the modified request
+    // Continue with the original request if no pubkey
     return NextResponse.next();
   }
   
@@ -76,7 +97,29 @@ export async function middleware(request: NextRequest) {
     return response;
   }
   
-  // Continue with the request
+  // JWT is valid, inject the pubkey into a custom request header for dashboard routes
+  if (verificationResult.pubkey) {
+    // Create a new headers object from the original request
+    const requestHeaders = new Headers(request.headers);
+    // Add the pubkey as a custom header
+    requestHeaders.set('x-auth-pubkey', verificationResult.pubkey);
+    
+    // Create a new request with the modified headers
+    const newRequest = new Request(request.url, {
+      method: request.method,
+      headers: requestHeaders,
+      body: request.body,
+      redirect: request.redirect,
+      signal: request.signal,
+    });
+    
+    // Continue with the modified request
+    return NextResponse.next({
+      request: newRequest,
+    });
+  }
+  
+  // Continue with the original request if no pubkey
   return NextResponse.next();
 }
 
