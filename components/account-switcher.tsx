@@ -2,6 +2,8 @@
 
 import * as React from "react";
 import { CaretSortIcon, CheckIcon, PlusCircledIcon } from "@radix-ui/react-icons";
+import { useSessionStore } from "@/stores/session";
+import { useApi } from "@/lib/api";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +32,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
+// Define the API account type
+interface ApiAccount {
+    pubkey: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+// Define the UI account type
 type Account = {
     label: string;
     value: string;
@@ -67,6 +77,68 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
     const [open, setOpen] = React.useState(false);
     const [showNewAccountDialog, setShowNewAccountDialog] = React.useState(false);
     const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
+    const [availableAccounts, setAvailableAccounts] = React.useState<Account[]>(accounts);
+    // Get the current account from the session store
+    const currentAccount = useSessionStore((state) => state.currentAccount);
+    
+    // Fetch accounts from the API
+    const { data: apiAccounts, error } = useApi<ApiAccount[]>(
+        currentAccount ? '/api/accounts' : null
+    );
+    
+    // Format a pubkey for display (first 6 and last 4 characters)
+    const formatPubkey = (pubkey: string) => {
+        if (!pubkey) return "";
+        return `${pubkey.substring(0, 6)}...${pubkey.substring(pubkey.length - 4)}`;
+    };
+    
+    // Update available accounts when API data changes
+    React.useEffect(() => {
+        if (apiAccounts && apiAccounts.length > 0) {
+            const newAccounts = apiAccounts.map((account: ApiAccount) => {
+                const formattedPubkey = formatPubkey(account.pubkey);
+                return {
+                    label: `npub: ${formattedPubkey}`,
+                    value: account.pubkey,
+                    icon: (
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                            <AvatarFallback>{account.pubkey.substring(0, 1).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                    ),
+                };
+            });
+            
+            setAvailableAccounts(newAccounts);
+            
+            // Set the first account as selected if we have accounts
+            if (newAccounts.length > 0) {
+                setSelectedAccount(newAccounts[0]);
+            }
+        } else if (error) {
+            console.error("Error fetching accounts:", error);
+            // Fallback to default accounts if there's an error
+            setAvailableAccounts(accounts);
+        }
+    }, [apiAccounts, error]);
+    
+    // Create a custom account object if user is logged in but API hasn't loaded yet
+    React.useEffect(() => {
+        if (currentAccount?.pubkey) {
+            const formattedPubkey = formatPubkey(currentAccount.pubkey);
+            const userAccount: Account = {
+                label: `npub: ${formattedPubkey}`,
+                value: currentAccount.pubkey,
+                icon: (
+                    <Avatar className="h-6 w-6">
+                        <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                        <AvatarFallback>{currentAccount.pubkey.substring(0, 1).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                ),
+            };
+            setSelectedAccount(userAccount);
+        }
+    }, [currentAccount]);
 
     return (
         <Dialog open={showNewAccountDialog} onOpenChange={setShowNewAccountDialog}>
@@ -90,7 +162,26 @@ export function AccountSwitcher({ className }: AccountSwitcherProps) {
                             <CommandInput placeholder="Search account..." />
                             <CommandEmpty>No account found.</CommandEmpty>
                             <CommandGroup heading="Accounts">
-                                {accounts.map((account) => (
+                                {/* Show current user account if logged in */}
+                                {currentAccount?.pubkey && (
+                                    <CommandItem
+                                        key={currentAccount.pubkey}
+                                        onSelect={() => {
+                                            setOpen(false);
+                                        }}
+                                        className="text-sm"
+                                    >
+                                        <Avatar className="h-6 w-6">
+                                            <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                                            <AvatarFallback>{currentAccount.pubkey.substring(0, 1).toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="ml-2">npub: {formatPubkey(currentAccount.pubkey)}</span>
+                                        <CheckIcon className="ml-auto h-4 w-4 opacity-100" />
+                                    </CommandItem>
+                                )}
+                                
+                                {/* Show default accounts if not logged in */}
+                                {!currentAccount?.pubkey && accounts.map((account) => (
                                     <CommandItem
                                         key={account.value}
                                         onSelect={() => {
