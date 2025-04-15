@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Hexpubkey } from '@nostr-dev-kit/ndk';
 
 /**
@@ -16,19 +17,30 @@ export interface Account {
 interface SessionState {
   // State
   currentAccount: Account | null;
+  isProCardDismissed: boolean;
   
   // Actions
   setCurrentAccount: (account: Account | null) => void;
+  setProCardDismissed: (dismissed: boolean) => void;
 }
 
 /**
  * Session store using Zustand
  * Manages the current account and provides methods to interact with it
  */
-export const useSessionStore = create<SessionState>((set) => ({
-  // Initial state
-  currentAccount: null,
-  
-  // Actions
-  setCurrentAccount: (account) => set({ currentAccount: account }),
-}));
+export const useSessionStore = create<SessionState>()(
+  persist(
+    (set) => ({
+      // Initial state
+      currentAccount: null,
+      isProCardDismissed: false,
+      
+      // Actions
+      setCurrentAccount: (account) => set({ currentAccount: account }),
+      setProCardDismissed: (dismissed) => set({ isProCardDismissed: dismissed }),
+    }),
+    {
+      name: 'session-storage',
+    }
+  )
+);

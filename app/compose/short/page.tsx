@@ -24,7 +24,6 @@ export default function ShortFormComposePage() {
     const quoteId = searchParams.get("quote");
     const editId = searchParams.get("edit");
 
-    // Fetch post data if editing an existing post
     useEffect(() => {
         if (editId) {
             const fetchPost = async () => {
@@ -32,7 +31,6 @@ export default function ShortFormComposePage() {
                 try {
                     const { post } = await apiGet(`/api/posts/${editId}`);
                     if (post && post.rawEvents && Array.isArray(post.rawEvents)) {
-                        // Transform rawEvents into the format expected by ThreadComposer
                         interface RawEvent {
                             content: string;
                             [key: string]: unknown;
@@ -54,7 +52,6 @@ export default function ShortFormComposePage() {
         }
     }, [editId, toast]);
 
-    // Mock quoted post data - in a real app, you would fetch this based on the ID
     const quotedPost = quoteId
         ? {
               id: quoteId,
@@ -83,7 +80,6 @@ export default function ShortFormComposePage() {
         }
         try {
             if (editId) {
-                // Update existing post
                 await apiPut(`/api/posts/${editId}`, {
                     rawEvents,
                     isDraft: true,
@@ -93,7 +89,6 @@ export default function ShortFormComposePage() {
                     description: "Your content has been updated and saved as a draft.",
                 });
             } else {
-                // Create new post
                 await apiPost("/api/posts", {
                     account_pubkey: accountPubkey,
                     rawEvents,
@@ -109,14 +104,12 @@ export default function ShortFormComposePage() {
         }
     };
 
-    // Replace with actual account pubkey from session/user context
     const accountPubkey = useCurrentAccount();
 
     const handleSchedulePost = async () => {
         try {
             const rawEvents = thread.filter(t => t.content.trim().length > 0).map(t => ({
                 content: t.content,
-                // Add more fields as needed for a rawEvent
             }));
             console.log("handleSchedulePost - rawEvents:", rawEvents);
             if (rawEvents.length === 0) {
@@ -127,14 +120,12 @@ export default function ShortFormComposePage() {
             let postId: string;
             
             if (editId) {
-                // 1. Update existing post
                 const { post } = await apiPut(`/api/posts/${editId}`, {
                     rawEvents,
                     isDraft: false,
                 });
                 postId = post.id;
             } else {
-                // 1. Create new post
                 const { post } = await apiPost("/api/posts", {
                     account_pubkey: accountPubkey,
                     rawEvents,
@@ -142,10 +133,8 @@ export default function ShortFormComposePage() {
                 postId = post.id;
             }
 
-            // 2. Schedule post
             await apiPost(`/api/posts/${postId}/schedule`, {});
 
-            // 3. Redirect to dashboard
             router.push("/dashboard");
         } catch (err) {
             toast({ title: "Error", description: String(err) });
@@ -153,36 +142,39 @@ export default function ShortFormComposePage() {
     };
 
     return (
-        <div className="max-w-3xl mx-auto px-4 py-6">
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center">
-                    <Link href="/dashboard">
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <ArrowLeft className="h-5 w-5" />
-                            <span className="sr-only">Back</span>
+        <>
+            <div className="border-b">
+                <div className="flex items-center justify-between px-4 py-4">
+                    <div className="flex items-center">
+                        <Link href="/dashboard">
+                            <Button variant="ghost" size="icon" className="rounded-full">
+                                <ArrowLeft className="h-5 w-5" />
+                                <span className="sr-only">Back</span>
+                            </Button>
+                        </Link>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" onClick={handleSaveDraft}>
+                            <Save className="mr-2 h-4 w-4" /> Save Draft
                         </Button>
-                    </Link>
-                    <h1 className="text-2xl font-bold ml-4">{editId ? "Edit Thread" : "New Thread"}</h1>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={handleSaveDraft}>
-                        <Save className="mr-2 h-4 w-4" /> Save Draft
-                    </Button>
-                    <Button variant="secondary" onClick={() => setIsScheduleModalOpen(true)}>
-                        Continue
-                    </Button>
+                        <Button variant="secondary" onClick={() => setIsScheduleModalOpen(true)}>
+                            Continue
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            <div className="mt-6">
-                {isLoading ? (
-                    <div className="flex items-center justify-center py-10">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        <span className="ml-3">Loading post...</span>
-                    </div>
-                ) : (
-                    <ThreadComposer initialQuote={quotedPost} initialThread={initialThread} onChange={setThread} />
-                )}
+            <div className="max-w-3xl mx-auto px-4 py-6">
+                <div className="mt-6">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-10">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <span className="ml-3">Loading post...</span>
+                        </div>
+                    ) : (
+                        <ThreadComposer initialQuote={quotedPost} initialThread={initialThread} onChange={setThread} />
+                    )}
+                </div>
             </div>
     
             <ScheduleModal
@@ -190,6 +182,6 @@ export default function ShortFormComposePage() {
                 onOpenChange={setIsScheduleModalOpen}
                 onSchedule={handleSchedulePost}
             />
-        </div>
+        </>
     );
 }
