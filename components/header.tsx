@@ -29,7 +29,7 @@ export function Header() {
                 <div className="ml-auto flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant={"secondary"}>
+                            <Button variant={"default"}>
                                 <Plus className="h-4 w-4" />
                                 New Post
                             </Button>
