@@ -168,7 +168,7 @@ export default function ShortFormComposePage() {
                     <Button variant="outline" onClick={handleSaveDraft}>
                         <Save className="mr-2 h-4 w-4" /> Save Draft
                     </Button>
-                    <Button onClick={() => setIsScheduleModalOpen(true)} className="rounded-full px-6">
+                    <Button variant="secondary" onClick={() => setIsScheduleModalOpen(true)}>
                         Continue
                     </Button>
                 </div>

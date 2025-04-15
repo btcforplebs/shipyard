@@ -29,7 +29,7 @@ export function Header() {
                 <div className="ml-auto flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button className="gap-2 bg-white text-black dark:bg-white dark:text-black hover:bg-gray-100 dark:hover:bg-gray-100">
+                            <Button variant={"secondary"}>
                                 <Plus className="h-4 w-4" />
                                 New Post
                             </Button>
