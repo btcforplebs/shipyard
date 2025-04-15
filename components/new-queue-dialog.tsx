@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { apiPost } from "@/lib/api";
+import { useCurrentAccount } from "@/hooks/use-current-account";
 
 interface NewQueueDialogProps {
     open: boolean;
@@ -26,12 +28,20 @@ export function NewQueueDialog({ open, onOpenChange }: NewQueueDialogProps) {
     const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
 
-    const handleSubmit = () => {
-        if (!name) return;
+    const accountPubkey = useCurrentAccount();
+
+    const handleSubmit = async () => {
+        if (!name || !accountPubkey) return;
 
         setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
+        try {
+            // Make API call to create the queue
+            const response = await apiPost("/api/queues", {
+                accountPubkey,
+                name,
+                description: description || undefined
+            });
+
             toast({
                 title: "Queue created",
                 description: `Queue "${name}" has been created successfully.`,
@@ -39,7 +49,16 @@ export function NewQueueDialog({ open, onOpenChange }: NewQueueDialogProps) {
             setName("");
             setDescription("");
             onOpenChange(false);
-        }, 1000);
+        } catch (error) {
+            console.error("Error creating queue:", error);
+            toast({
+                title: "Error",
+                description: "Failed to create queue. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

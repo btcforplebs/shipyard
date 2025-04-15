@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, ListIcon } from "lucide-react";
 import { QueueCalendar } from "@/components/queue-calendar";
+import { QueueFilter } from "@/components/queues/queue-filter";
 
 import { DashboardContentQueue } from "./content-queue";
 import { useCurrentAccount } from "@/hooks/use-current-account";
@@ -17,6 +18,7 @@ export default function Dashboard() {
     // State for filtering and draft count
     const [filter, setFilter] = useState<"all" | "drafts" | "published">("all");
     const [draftCount, setDraftCount] = useState<number | null>(null);
+    const [selectedQueueId, setSelectedQueueId] = useState<string | null>(null);
 
     // Fetch draft count
     useEffect(() => {
@@ -93,7 +95,14 @@ export default function Dashboard() {
 
             <Tabs defaultValue="list">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold">Content Queue</h2>
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-xl font-bold">Content Queue</h2>
+                        <QueueFilter
+                            accountPubkey={accountPubkey}
+                            onQueueChange={setSelectedQueueId}
+                            className="w-[180px]"
+                        />
+                    </div>
                     <TabsList>
                         <TabsTrigger value="list" className="gap-2">
                             <ListIcon className="h-4 w-4" /> List
@@ -109,6 +118,7 @@ export default function Dashboard() {
                             <DashboardContentQueue
                                 accountPubkey={accountPubkey}
                                 isDraft={filter === "drafts" ? true : filter === "published" ? false : undefined}
+                                queueId={selectedQueueId}
                             />
                         ) : (
                             <div className="text-center py-8 text-muted-foreground">Loading account...</div>

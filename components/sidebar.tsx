@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LayoutDashboard, Clock, Users, Settings, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const routes = [
     {
@@ -15,16 +16,11 @@ const routes = [
         color: "text-sky-500",
     },
     {
-        label: "Queues",
-        icon: Clock,
-        href: "/dashboard/queues",
-        color: "text-pink-700",
-    },
-    {
         label: "Collaborators",
         icon: Users,
         href: "/dashboard/collaborators",
         color: "text-orange-500",
+        isPro: true,
     },
     {
         label: "Settings",
@@ -33,6 +29,16 @@ const routes = [
         color: "text-gray-500",
     },
 ];
+
+// PRO label component with gradient
+const ProLabel = () => (
+    <Badge
+        className="ml-2 bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 border-none text-white text-xs font-semibold px-2 py-0.5"
+        aria-label="Pro feature"
+    >
+        PRO
+    </Badge>
+);
 
 export function Sidebar() {
     const pathname = usePathname();
@@ -48,7 +54,10 @@ export function Sidebar() {
                                 className={cn("w-full justify-start gap-2", pathname === route.href && "bg-muted")}
                             >
                                 <route.icon className={cn("h-4 w-4", route.color)} />
-                                {route.label}
+                                <span className="flex items-center">
+                                    {route.label}
+                                    {route.isPro && <ProLabel />}
+                                </span>
                             </Button>
                         </Link>
                     ))}

@@ -9,13 +9,16 @@ type RawEvent = { content?: string };
 export function DashboardContentQueue({
   accountPubkey,
   isDraft,
+  queueId,
 }: {
   accountPubkey: string;
   isDraft?: boolean;
+  queueId?: string | null;
 }) {
   const query = accountPubkey
     ? `/api/posts?account_pubkey=${accountPubkey}` +
-      (isDraft !== undefined ? `&is_draft=${isDraft}` : "")
+      (isDraft !== undefined ? `&is_draft=${isDraft}` : "") +
+      (queueId ? `&queue_id=${queueId}` : "")
     : null;
 
   const { data, error, isLoading } = useApi<{ posts: Post[] }>(query);
