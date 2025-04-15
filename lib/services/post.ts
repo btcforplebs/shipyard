@@ -88,8 +88,10 @@ export const PostService = {
     ): Promise<Post> {
         const updateData: any = {};
 
-        if (data.rawEvents) {
+        if (data.rawEvents !== undefined) {
+            console.log("PostService.update - rawEvents:", data.rawEvents);
             updateData.rawEvents = JSON.stringify(data.rawEvents);
+            console.log("PostService.update - stringified rawEvents:", updateData.rawEvents);
         }
 
         if (data.isDraft !== undefined) {

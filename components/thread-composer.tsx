@@ -119,9 +119,12 @@ const Tweet = ({
 interface ThreadComposerProps {
     initialQuote?: QuotedPost | null;
     onChange?: (tweets: { id: string; content: string }[]) => void;
+    initialThread?: { id: string; content: string }[];
 }
-export function ThreadComposer({ initialQuote = null, onChange }: ThreadComposerProps) {
-    const [tweets, setTweets] = useState<{ id: string; content: string }[]>([{ id: "1", content: "" }]);
+export function ThreadComposer({ initialQuote = null, initialThread, onChange }: ThreadComposerProps) {
+    const [tweets, setTweets] = useState<{ id: string; content: string }[]>(
+        initialThread && initialThread.length > 0 ? initialThread : [{ id: "1", content: "" }]
+    );
     const [quotedPost, setQuotedPost] = useState<QuotedPost | null>(initialQuote);
     useEffect(() => {
         if (onChange) onChange(tweets);

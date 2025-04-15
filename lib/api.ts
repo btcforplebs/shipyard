@@ -76,6 +76,31 @@ export function useApi<Data = any, Error = any>(
 
     return swr;
 }
+/**
+ * Authenticated GET request (for non-SWR usage)
+ */
+export async function apiGet(url: string) {
+    const token = localStorage.getItem("auth_token");
+    const headers: HeadersInit = {
+        "Content-Type": "application/json",
+    };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+    const response = await fetch(url, {
+        method: "GET",
+        headers,
+    });
+    if (!response.ok) {
+        const error = new Error("API request failed");
+        const errorData = await response.json().catch(() => ({}));
+        (error as any).status = response.status;
+        (error as any).info = errorData;
+        throw error;
+    }
+    return response.json();
+}
+
 
 /**
  * Authenticated POST request

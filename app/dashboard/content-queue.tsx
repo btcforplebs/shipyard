@@ -6,10 +6,19 @@ import type { Post } from "@/types/nostr";
 
 type RawEvent = { content?: string };
 
-export function DashboardContentQueue({ accountPubkey }: { accountPubkey: string }) {
-  const { data, error, isLoading } = useApi<{ posts: Post[] }>(
-    accountPubkey ? `/api/posts?account_pubkey=${accountPubkey}` : null
-  );
+export function DashboardContentQueue({
+  accountPubkey,
+  isDraft,
+}: {
+  accountPubkey: string;
+  isDraft?: boolean;
+}) {
+  const query = accountPubkey
+    ? `/api/posts?account_pubkey=${accountPubkey}` +
+      (isDraft !== undefined ? `&is_draft=${isDraft}` : "")
+    : null;
+
+  const { data, error, isLoading } = useApi<{ posts: Post[] }>(query);
 
   if (isLoading) {
     return <div className="text-center py-8 text-muted-foreground">Loading posts...</div>;

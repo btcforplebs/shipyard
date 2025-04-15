@@ -125,8 +125,14 @@ export function ContentCard(post: Post) {
                                                     >
                                                         Edit
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => console.log("Reschedule")}>
-                                                        Reschedule
+                                                    <DropdownMenuItem onClick={() => {
+                                                        if (post.isDraft) {
+                                                            setIsRepostModalOpen(true);
+                                                        } else {
+                                                            console.log("Reschedule");
+                                                        }
+                                                    }}>
+                                                        {post.isDraft ? "Schedule" : "Reschedule"}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         className="text-destructive"
@@ -165,7 +171,13 @@ export function ContentCard(post: Post) {
                                         </div>
                                     <div className={`ml-auto flex items-center text-xs`}>
                                         <Clock className="mr-1 h-3.5 w-3.5" />
-                                        Scheduled for {formatDate(scheduledFor)}
+                                        {post.isDraft
+                                            ? <span
+                                                className="font-semibold text-orange-500 cursor-pointer hover:underline"
+                                                onClick={() => setIsRepostModalOpen(true)}
+                                            >Draft</span>
+                                            : <>Scheduled for {formatDate(scheduledFor)}</>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -207,6 +219,27 @@ export function ContentCard(post: Post) {
                     onOpenChange={setIsRepostModalOpen}
                     postId={id}
                     postType={repostType}
+                    onSchedule={async ({ date }) => {
+                        // Use apiPut from lib/api.ts to update post: set isDraft to false and set scheduled time
+                        try {
+                            // You may need to adjust the field name for scheduled time depending on your backend
+                            await (await import("@/lib/api")).apiPut(`/api/posts/${id}`, {
+                                isDraft: false,
+                                scheduledAt: date ? date.toISOString() : undefined
+                            });
+                            toast({
+                                title: "Post scheduled",
+                                description: "Your post has been scheduled.",
+                            });
+                            router.refresh();
+                        } catch (err) {
+                            toast({
+                                title: "Failed to schedule post",
+                                description: String(err),
+                                variant: "destructive",
+                            });
+                        }
+                    }}
                 />
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent>
@@ -326,7 +359,13 @@ export function ContentCard(post: Post) {
                     </div>
                     <div className="flex items-center text-xs text-muted-foreground">
                         <Clock className="mr-1 h-3.5 w-3.5" />
-                        Scheduled for {formatDate(scheduledFor)}
+                        {post.isDraft
+                            ? <span
+                                className="font-semibold text-orange-500 cursor-pointer hover:underline"
+                                onClick={() => setIsRepostModalOpen(true)}
+                              >Draft</span>
+                            : <>Scheduled for {formatDate(scheduledFor)}</>
+                        }
                     </div>
                 </CardFooter>
             </Card>

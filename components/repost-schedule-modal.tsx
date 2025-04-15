@@ -21,13 +21,17 @@ interface RepostScheduleModalProps {
     onOpenChange: (open: boolean) => void;
     postId: string;
     postType: "repost" | "quote";
+    onSchedule?: (scheduleData: { date?: Date }) => Promise<void> | void;
 }
 
-export function RepostScheduleModal({ open, onOpenChange, postId, postType }: RepostScheduleModalProps) {
+export function RepostScheduleModal({ open, onOpenChange, postId, postType, onSchedule }: RepostScheduleModalProps) {
     const [date, setDate] = useState<Date | undefined>(new Date());
     const { toast } = useToast();
 
-    const handleSchedule = () => {
+    const handleSchedule = async () => {
+        if (onSchedule) {
+            await onSchedule({ date });
+        }
         toast({
             title: `${postType === "repost" ? "Repost" : "Quote"} scheduled`,
             description: `Your ${postType} has been scheduled successfully.`,

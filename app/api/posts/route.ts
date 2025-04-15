@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       authorPubkey: author_pubkey || account_pubkey,
       kind,
       rawEvents,
-      isDraft: true,
+      isDraft: body.isDraft ?? true,
     });
 
     return NextResponse.json({ post }, { status: 201 });
@@ -36,7 +36,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing account_pubkey" }, { status: 400 });
     }
 
-    const posts = await PostService.getByAccount(account_pubkey, { isDraft: false });
+    // Support filtering by is_draft query param
+    const isDraftParam = searchParams.get("is_draft");
+    let isDraft: boolean | undefined = undefined;
+    if (isDraftParam === "true") isDraft = true;
+    if (isDraftParam === "false") isDraft = false;
+
+    const posts = await PostService.getByAccount(account_pubkey, { isDraft });
     return NextResponse.json({ posts }, { status: 200 });
   } catch (err) {
     return NextResponse.json({ error: "Failed to fetch posts", details: String(err) }, { status: 500 });
