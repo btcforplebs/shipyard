@@ -17,13 +17,26 @@ Shipyard uses SQLite with Prisma ORM for database management. Follow these steps
    ```bash
    bun run db:generate
    ```
+3. Create new .env file:
+   ```bash
+   sudo nano .env
+   ```
+   paste the following:
+   ```
+   DATABASE_URL="file:./dev.db"
+   JWT_SECRET="super-secret-long-random-string"
+   ```
+   you can generate super-secret-long-random-string with
+   ```
+   openssl rand -base64 32
+   ```
 
-3. Run migrations to create the database:
+5. Run migrations to create the database:
    ```bash
    bun run db:migrate
    ```
 
-4. Seed the database with initial data:
+6. Seed the database with initial data:
    ```bash
    bun run db:seed
    ```
