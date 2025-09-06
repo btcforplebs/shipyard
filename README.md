@@ -19,7 +19,7 @@ Shipyard uses SQLite with Prisma ORM for database management. Follow these steps
    ```
 3. Create new .env file:
    ```bash
-   sudo nano .env
+   nano .env
    ```
    paste the following:
    ```
