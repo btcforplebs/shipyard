@@ -19,14 +19,15 @@ Shipyard uses SQLite with Prisma ORM for database management. Follow these steps
    ```
 3. Create new .env file:
    ```bash
-   nano .env
+   sudo nano .env
    ```
-   paste the following:
+   enter computer password paste the following:
    ```
    DATABASE_URL="file:./dev.db"
    JWT_SECRET="super-secret-long-random-string"
    ```
-   you can generate super-secret-long-random-string with
+   replace super-secret-long-random-string:
+   generate one by running
    ```
    openssl rand -base64 32
    ```
